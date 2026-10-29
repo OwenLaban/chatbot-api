@@ -32,6 +32,28 @@ def test_client_tanpa_api_key(monkeypatch):
         llm._client()
 
 
+def test_client_memakai_env(monkeypatch):
+    import openai
+
+    dibuat = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            dibuat.update(kwargs)
+
+    monkeypatch.setenv("LLM_API_KEY", "kunci-uji")
+    monkeypatch.setenv("LLM_BASE_URL", "https://contoh.test/v1")
+    monkeypatch.setattr(openai, "OpenAI", FakeOpenAI)
+
+    client = llm._client()
+
+    assert isinstance(client, FakeOpenAI)
+    assert dibuat == {
+        "base_url": "https://contoh.test/v1",
+        "api_key": "kunci-uji",
+    }
+
+
 def test_balas_mengirim_history_dan_memvalidasi_json(monkeypatch):
     fake = FakeClient(
         '{"balasan": "Hai", "topik": "umum", '
