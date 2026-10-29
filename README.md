@@ -3,8 +3,9 @@
 Chatbot dengan **memory percakapan** dan **structured output JSON**, dibangun
 dengan FastAPI + Pydantic + LLM OpenAI-compatible (default: OpenRouter free).
 
-> Status: 🚧 dalam pengerjaan — proyek portfolio #3, Minggu 9 dari roadmap
-> AI Engineer 24 minggu.
+> Status: ✅ selesai — proyek portfolio #3, Minggu 9 dari roadmap
+> AI Engineer 24 minggu. 16 test lulus dan sudah diuji end-to-end dengan
+> OpenRouter.
 
 ## Masalah
 
@@ -106,8 +107,14 @@ Buka dokumentasi interaktif di <http://127.0.0.1:8002/docs>.
 |---|---|---|---|
 | `LLM_API_KEY` | ya | — | API key provider |
 | `LLM_BASE_URL` | tidak | `https://openrouter.ai/api/v1` | Endpoint OpenAI-compatible |
-| `LLM_MODEL` | tidak | `openrouter/free` | Nama model |
+| `LLM_MODEL` | tidak | `recursive/flint-v1.0:free` | Nama model chat |
 | `CHATBOT_DATA_FILE` | tidak | `data/conversations.json` | Lokasi file memory |
+
+> **Catatan model:** `openrouter/free` adalah auto-router. Saat diuji, ia bisa
+> memilih model safety dan membalas `User Safety: safe`, sehingga bukan JSON.
+> Karena itu proyek ini memakai model chat gratis yang spesifik. Jika model
+> tersebut tidak tersedia, pilih model gratis lain di OpenRouter lalu set
+> `LLM_MODEL`.
 
 ## Endpoint
 
@@ -183,6 +190,8 @@ pytest -q
 Test tidak memanggil LLM sungguhan: `app.main.balas` diganti fungsi palsu.
 File memory diarahkan ke `tmp_path`, sehingga test tidak saling mengotori data.
 
+Total: **16 test**.
+
 Yang diuji:
 
 - health check;
@@ -192,7 +201,9 @@ Yang diuji:
 - isolasi antar-sesi;
 - hapus sesi + `404`;
 - validasi input;
-- isi file JSON.
+- isi file JSON;
+- konfigurasi client (`base_url` + `api_key` dari environment);
+- output LLM yang bukan JSON ditolak.
 
 ## Evaluasi manual
 
@@ -200,11 +211,11 @@ Diisi setelah implementasi selesai dan diuji dengan model sungguhan.
 
 | Skenario | Hasil | Catatan |
 |---|---|---|
-| Sapaan biasa | TODO | |
-| Ingat nama dari pesan sebelumnya | TODO | |
-| Jawaban selalu JSON valid | TODO | |
-| Sesi berbeda tidak tercampur | TODO | |
-| Hapus sesi | TODO | |
+| Sapaan biasa | ✅ | `200`, JSON valid, balasan natural |
+| Ingat nama dari pesan sebelumnya | ✅ | “Siapa nama saya?” → “Nama Anda Rina” |
+| Jawaban selalu JSON valid | ✅ | Semua respons lolos `ChatResponse` |
+| Sesi berbeda tidak tercampur | ✅ | Sesi Budi tidak melihat data Rina |
+| Hapus sesi | ✅ | `DELETE` → `200`, lalu `GET` → `404` |
 
 ## Keterbatasan
 
@@ -213,6 +224,8 @@ Diisi setelah implementasi selesai dan diuji dengan model sungguhan.
 - Belum ada autentikasi; siapa pun yang tahu `session_id` bisa membaca sesi.
 - Riwayat tumbuh tanpa batas dan belum dipangkas berdasarkan token.
 - Model gratis bisa lambat, kena rate limit, atau berubah tanpa pemberitahuan.
+- Kualitas klasifikasi (`sentimen`, `butuh_eskalasi`) tergantung model. Model
+  kecil bisa memberi `netral` untuk keluhan yang jelas.
 - Output JSON bergantung pada kepatuhan model. Validasi Pydantic menangkap
   bentuk yang salah, tetapi tidak menjamin isi jawaban benar.
 
